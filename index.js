@@ -39,11 +39,11 @@ app.use(passport.initialize());
 require("./config/passport")(passport);
 
 // making images and vides folder "media/uploads" public
-app.use("/api/videos", express.static("media/uploads"));
+app.use("/videos", express.static("media/uploads"));
 
 // Routes
-app.use("/api/users", users);
-app.use("/api/videos", videos);
+app.use("/users", users);
+app.use("/videos", videos);
 
 const port = process.env.PORT || 5000; // process.env.port is Heroku's port if you choose to deploy the app there
 app.listen(port, () => console.log(`Server up and running on port ${port} !`));
