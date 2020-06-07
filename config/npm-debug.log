@@ -1,0 +1,31 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'C:\\Program Files\\nodejs\\node.exe',
+1 verbose cli   'C:\\Users\\Lc 45\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'run',
+1 verbose cli   'server' ]
+2 info using npm@3.10.10
+3 info using node@v10.15.3
+4 verbose run-script [ 'preserver', 'server', 'postserver' ]
+5 info lifecycle mern-auth@1.0.0~preserver: mern-auth@1.0.0
+6 silly lifecycle mern-auth@1.0.0~preserver: no script for preserver, continuing
+7 info lifecycle mern-auth@1.0.0~server: mern-auth@1.0.0
+8 verbose lifecycle mern-auth@1.0.0~server: unsafe-perm in lifecycle true
+9 verbose lifecycle mern-auth@1.0.0~server: PATH: C:\Users\Lc 45\AppData\Roaming\npm\node_modules\npm\bin\node-gyp-bin;D:\mern-auth\node_modules\.bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\Lc 45\bin;C:\Python27;C:\Python27\Scripts;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Program Files\Git\cmd;C:\Program Files\Amazon\AWSCLI\bin;C:\ProgramData\chocolatey\bin;C:\Program Files\Java\jdk1.8.0_201\bin;C:\xampp\php;C:\ProgramData\ComposerSetup\bin;C:\Users\Lc 45\AppData\Local\Android\Sdk\platform-tools;C:\Program Files (x86)\Yarn\bin;C:\Program Files\nodejs;C:\Users\Lc 45\AppData\Local\Programs\Python\Python37-32\Scripts;C:\Users\Lc 45\AppData\Local\Programs\Python\Python37-32;C:\Users\Lc 45\AppData\Local\Programs\Microsoft VS Code\bin;C:\Program Files\Java\jre1.8.0_191\bin;C:\Program Files\JetBrains\WebStorm 2018.3.2\bin;C:\Program Files\heroku\bin;C:\Users\Lc 45\AppData\Roaming\Composer\vendor\bin;C:\Users\Lc 45\AppData\Local\Yarn\bin;C:\Users\Lc 45\AppData\Roaming\npm
+10 verbose lifecycle mern-auth@1.0.0~server: CWD: D:\mern-auth
+11 silly lifecycle mern-auth@1.0.0~server: Args: [ '/d /s /c', 'nodemon index.js' ]
+12 verbose stack Error: kill ENOSYS
+12 verbose stack     at process.kill (internal/process/per_thread.js:198:13)
+12 verbose stack     at process.listener (C:\Users\Lc 45\AppData\Roaming\npm\node_modules\npm\node_modules\npmlog\node_modules\gauge\node_modules\signal-exit\index.js:86:15)
+12 verbose stack     at process.emit (events.js:194:15)
+13 verbose cwd D:\mern-auth\config
+14 error Windows_NT 6.1.7601
+15 error argv "C:\\Program Files\\nodejs\\node.exe" "C:\\Users\\Lc 45\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js" "run" "server"
+16 error node v10.15.3
+17 error npm  v3.10.10
+18 error code ENOSYS
+19 error errno ENOSYS
+20 error syscall kill
+21 error kill ENOSYS
+22 error If you need help, you may report this error at:
+22 error     <https://github.com/npm/npm/issues>
+23 verbose exit [ 1, true ]
