@@ -14,7 +14,16 @@ app.use(cors());
 // Bodyparser middleware
 app.use(
   bodyParser.urlencoded({
-    extended: false,
+    extended: true,
+    limit: "100mb",
+    parameterLimit: 10000000,
+  })
+);
+
+app.use(
+  bodyParser.json({
+    limit: "50mb",
+    extended: true,
   })
 );
 
