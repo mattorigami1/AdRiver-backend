@@ -11,15 +11,15 @@ const passport = require("passport");
 
 // AWS-S3 Preparation
 const s3 = new aws.S3({
-  accessKeyId: "AKIA46Q7F4PO2BGQBH7P",
-  secretAccessKey: "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",
-  Bucket: "adriver-bucket",
+  accessKeyId: process.env.accessKeyId,
+  secretAccessKey: process.env.secretAccessKey,
+  Bucket: process.env.Bucket,
 });
 
 const uploadsBusinessGallery = multer({
   storage: multerS3({
     s3: s3,
-    bucket: "adriver-bucket",
+    bucket: process.env.Bucket,
     acl: "public-read",
     key: function (req, file, cb) {
       cb(
@@ -241,7 +241,7 @@ router.delete(
       .then((video) => {
         s3.deleteObjects(
           {
-            Bucket: "adriver-bucket",
+            Bucket: process.env.Bucket,
             Delete: {
               // required
               Objects: [
@@ -291,7 +291,7 @@ module.exports = router;
 // const profileImgUpload = multer({
 //   storage: multerS3({
 //     s3: s3,
-//     bucket: "adriver-bucket",
+//     bucket: process.env.Bucket,
 //     acl: "public-read",
 //     key: function (req, file, cb) {
 //       cb(

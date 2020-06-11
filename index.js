@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const app = express();
 const passport = require("passport");
 const cors = require("cors");
+const dotenv = require("dotenv");
+dotenv.config();
 
 // Bringing User Route
 const users = require("./routes/api/users");
@@ -33,7 +35,7 @@ app.get("/", (req, res) => {
 
 app.use(bodyParser.json());
 // DB Config
-const db = require("./config/keys").mongoURI;
+const db = process.env.mongoURI;
 // Connect to MongoDB
 mongoose
   .connect(db, { useNewUrlParser: true })
@@ -51,8 +53,8 @@ require("./config/passport")(passport);
 app.use("/videos", express.static("media/uploads"));
 
 // Routes
-app.use("/users", users);
-app.use("/videos", videos);
+app.use("/api/users", users);
+app.use("/api/videos", videos);
 
 const port = process.env.PORT || 5000; // process.env.port is Heroku's port if you choose to deploy the app there
 app.listen(port, () => console.log(`Server up and running on port ${port} !`));
