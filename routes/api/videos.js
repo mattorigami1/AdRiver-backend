@@ -1,53 +1,30 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const multerS3 = require("multer-s3");
-const aws = require("aws-sdk");
 const Video = require("../../models/Video");
 const makeResponse = require("../../helpers/response");
 const fs = require("fs");
 const path = require("path");
 const passport = require("passport");
-
-// AWS-S3 Preparation
-const s3 = new aws.S3({
-  accessKeyId: process.env.accessKeyId,
-  secretAccessKey: process.env.secretAccessKey,
-  Bucket: process.env.Bucket,
-});
-
-const uploadsBusinessGallery = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.Bucket,
-    acl: "public-read",
-    key: function (req, file, cb) {
-      cb(
-        null,
-        path.basename(file.originalname, path.extname(file.originalname)) +
-          "-" +
-          Date.now() +
-          path.extname(file.originalname)
-      );
-    },
-  }),
-  limits: { fileSize: 50000000 }, // In bytes: 2000000 bytes = 50 MB
-}).array("video", 2);
+const s3 = require("../../config/aws");
+const {
+  uploadsBothVideoImage,
+  uploadsOnlyVideo,
+  uploadsOnlyImage,
+} = require("../../helpers/functions");
 
 router.post(
   "/",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
-    uploadsBusinessGallery(req, res, async (error) => {
+    uploadsBothVideoImage(req, res, async (error) => {
       if (error) {
-        console.log("errors", error);
         res.json({ error: error });
+        makeResponse(res, 400, "Error in uploading image", null, true);
       } else {
         // If File not found
         // console.log("Ressss => ", req.files);
         if (req.files === undefined) {
-          console.log("Error: No File Selected!");
-          res.json("Error: No File Selected");
+          makeResponse(res, 400, "No File Selected", null, true);
         } else {
           // If Success
 
@@ -66,72 +43,14 @@ router.post(
           await newPOst
             .save()
             .then((vid) => {
-              res.status(200).json({
-                statusCode: 200,
-                message: "New Add Uploaded SUccessfully",
-                data: vid,
-              });
+              makeResponse(res, 200, "Add Successfully Added", vid, false);
             })
             .catch((err) => {
-              res.status(400).json({
-                statusCode: 400,
-                message: "Add Upload Failed",
-                error: err,
-              });
+              makeResponse(res, 400, "Add Upload Failed", null, true);
             });
-
-          // Save the file name into databaseres.json( {
-          //  filesArray: fileArray,
-          //  locationArray: galleryImgLocationArray
-          // } );
         }
       }
     });
-  }
-);
-
-// @route GET api/videos
-// @desc Get All Videos
-// @access Public
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    await Video.find({})
-      .populate("user")
-      .then((videos) => {
-        res
-          .status(200)
-          .json({ statusCode: 200, message: "All Videos", videos: videos });
-      })
-      .catch((err) => {
-        makeResponse(res, 500, "Failed !", err, true);
-      });
-  }
-);
-
-// @route GET api/videos/:id
-// @desc Get Single Videos By ID
-// @access Public
-router.get(
-  "/:id",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    await Video.findOne({ _id: req.params.id })
-      .then((video) => {
-        res.status(200).json({
-          statusCode: 200,
-          message: "Single Video Successfull",
-          data: video,
-        });
-      })
-      .catch((err) => {
-        res.status(400).json({
-          statusCode: 400,
-          message: "Single Video Failed",
-          errors: err,
-        });
-      });
   }
 );
 
@@ -139,7 +58,7 @@ router.get(
 // @desc Update Single Videos By ID
 // @access Public
 router.put(
-  "/:id",
+  "/without/:id",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const updatedObj = {
@@ -167,6 +86,317 @@ router.put(
   }
 );
 
+// @route PUT api/videos/:id
+// @desc Update Single Videos By ID
+// @access Public
+router.put(
+  "/withVideo/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    uploadsOnlyVideo(req, res, async (error) => {
+      if (error) {
+        res.json({ error: error });
+        makeResponse(res, 400, "Error in uploading image", null, true);
+      } else {
+        // If File not found
+        // console.log("Ressss => ", req.files);
+        if (req.files === undefined) {
+          makeResponse(res, 400, "No File Selected", null, true);
+        } else {
+          await Video.findOne({ _id: req.params.id })
+            .then((video) => {
+              s3.deleteObjects(
+                {
+                  Bucket: process.env.Bucket,
+                  Delete: {
+                    // required
+                    Objects: [
+                      // required
+                      {
+                        Key: video.video_key, // required
+                      },
+                    ],
+                  },
+                },
+                function (err, data) {
+                  if (err) {
+                    return makeResponse(
+                      res,
+                      400,
+                      "Error deleting Video",
+                      null,
+                      true
+                    );
+                  } else {
+                  }
+                  // an error occurred
+                  // else makeResponse(res, 200, "Deleted Video", video, false);
+                  // successful response
+                }
+              );
+            })
+            .catch((err) => {
+              res.status(400).json({
+                statusCode: 400,
+                message: "No video found",
+                errors: err,
+              });
+            });
+
+          const updatedObj = {
+            name: req.body.name,
+            description: req.body.description,
+            video_path: req.files[0].location,
+            video_name: req.files[0].originalname,
+            video_key: req.files[0].key,
+            user: req.user.id,
+          };
+
+          await Video.findOneAndUpdate({ _id: req.params.id }, updatedObj, {
+            new: true,
+          })
+            .then((video) => {
+              res.status(200).json({
+                statusCode: 200,
+                message: "Updated Video",
+                data: video,
+              });
+            })
+            .catch((err) => {
+              res.status(400).json({
+                statusCode: 400,
+                message: "Update Failed",
+                errors: err,
+              });
+            });
+        }
+      }
+    });
+  }
+);
+
+// @route PUT api/videos/:id
+// @desc Update Single Videos By ID
+// @access Public
+router.put(
+  "/withImage/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    uploadsOnlyImage(req, res, async (error) => {
+      if (error) {
+        res.json({ error: error });
+        makeResponse(res, 400, "Error in uploading image", null, true);
+      } else {
+        // If File not found
+        // console.log("Ressss => ", req.files);
+        if (req.files === undefined) {
+          makeResponse(res, 400, "No File Selected", null, true);
+        } else {
+          console.log("Viddd =======> ", req.params.id);
+
+          await Video.findOne({ _id: req.params.id })
+            .then((video) => {
+              s3.deleteObjects(
+                {
+                  Bucket: process.env.Bucket,
+                  Delete: {
+                    // required
+                    Objects: [
+                      // required
+                      {
+                        Key: video.thumbnail_key, // required
+                      },
+                    ],
+                  },
+                },
+                function (err, data) {
+                  if (err) {
+                    return makeResponse(
+                      res,
+                      400,
+                      "Error deleting Video",
+                      null,
+                      true
+                    );
+                  } else {
+                  }
+                  // an error occurred
+                  // else makeResponse(res, 200, "Deleted Video", video, false);
+                  // successful response
+                }
+              );
+            })
+            .catch((err) => {
+              res.status(400).json({
+                statusCode: 400,
+                message: "No video found",
+                errors: err,
+              });
+            });
+
+          const updatedObj = {
+            name: req.body.name,
+            description: req.body.description,
+            thumbnail_path: req.files[0].location,
+            thumbnail_name: req.files[0].originalname,
+            thumbnail_key: req.files[0].key,
+            user: req.user.id,
+          };
+
+          await Video.findOneAndUpdate({ _id: req.params.id }, updatedObj, {
+            new: true,
+          })
+            .then((video) => {
+              res.status(200).json({
+                statusCode: 200,
+                message: "Updated Video",
+                data: video,
+              });
+            })
+            .catch((err) => {
+              res.status(400).json({
+                statusCode: 400,
+                message: "Update Failed",
+                errors: err,
+              });
+            });
+        }
+      }
+    });
+  }
+);
+
+// @route PUT api/videos/:id
+// @desc Update Single Videos By ID
+// @access Public
+router.put(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    uploadsBothVideoImage(req, res, async (error) => {
+      if (error) {
+        res.json({ error: error });
+        makeResponse(res, 400, "Error in uploading image", null, true);
+      } else {
+        // If File not found
+        // console.log("Ressss => ", req.files);
+        if (req.files === undefined) {
+          makeResponse(res, 400, "No File Selected", null, true);
+        } else {
+          await Video.findOne({ _id: req.params.id })
+            .then((video) => {
+              s3.deleteObjects(
+                {
+                  Bucket: process.env.Bucket,
+                  Delete: {
+                    // required
+                    Objects: [
+                      // required
+                      {
+                        Key: video.video_key, // required
+                      },
+                      {
+                        Key: video.thumbnail_key,
+                      },
+                    ],
+                  },
+                },
+                function (err, data) {
+                  if (err) {
+                    return makeResponse(
+                      res,
+                      400,
+                      "Error deleting Video",
+                      null,
+                      true
+                    );
+                  } else {
+                  }
+                  // an error occurred
+                  // else makeResponse(res, 200, "Deleted Video", video, false);
+                  // successful response
+                }
+              );
+            })
+            .catch((err) => {
+              res.status(400).json({
+                statusCode: 400,
+                message: "No video found",
+                errors: err,
+              });
+            });
+
+          const updatedObj = {
+            name: req.body.name,
+            description: req.body.description,
+            video_path: req.files[0].location,
+            video_name: req.files[0].originalname,
+            video_key: req.files[0].key,
+            thumbnail_path: req.files[1].location,
+            thumbnail_name: req.files[1].originalname,
+            thumbnail_key: req.files[1].key,
+            user: req.user.id,
+          };
+
+          await Video.findOneAndUpdate({ _id: req.params.id }, updatedObj, {
+            new: true,
+          })
+            .then((video) => {
+              res.status(200).json({
+                statusCode: 200,
+                message: "Updated Video",
+                data: video,
+              });
+            })
+            .catch((err) => {
+              res.status(400).json({
+                statusCode: 400,
+                message: "Update Failed",
+                errors: err,
+              });
+            });
+        }
+      }
+    });
+  }
+);
+
+// @route GET api/videos
+// @desc Get All Videos
+// @access Public
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    await Video.find({})
+      .populate("user")
+      .then((videos) => {
+        makeResponse(res, 200, "All Videos", videos, false);
+      })
+      .catch((err) => {
+        makeResponse(res, 400, "Failed during fetching videos !", null, true);
+      })
+      .catch((err) => {});
+  }
+);
+
+// @route GET api/videos/:id
+// @desc Get Single Videos By ID
+// @access Public
+router.get(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    await Video.findOne({ _id: req.params.id })
+      .then((video) => {
+        makeResponse(res, 200, "Single Video", video, false);
+      })
+      .catch((err) => {
+        makeResponse(res, 400, "Single Video Failed", null, true);
+      });
+  }
+);
+
 // @route POST api/videos/review/:id
 // @desc create review against a video
 // @access Public
@@ -181,9 +411,8 @@ router.post(
       negative: req.body.negative,
       like: req.body.like,
       possitive: req.body.possitive,
+      heardBefore: req.body.heardBefore,
     };
-
-    console.log("Video Reviews => ", newReview);
 
     await Video.findById(vid_id)
       .then((updateVid) => {
@@ -257,9 +486,8 @@ router.delete(
           },
           function (err, data) {
             if (err) {
-              console.log(err, err.stack);
+              return makeResponse(res, 400, "Error deleting Video", null, true);
             } else {
-              console.log("Data from s3 => ", data);
               Video.deleteOne({ _id: req.params.id })
                 .then((vide) => {
                   return makeResponse(res, 200, "Deleted Video", video, false);

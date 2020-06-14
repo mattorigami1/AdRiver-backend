@@ -38,6 +38,7 @@ const VideoSchema = new Schema({
       negative: String,
       possitive: String,
       like: Boolean,
+      heardBefore: Boolean,
       date: { type: Date, default: Date.now },
     },
   ],

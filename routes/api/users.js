@@ -7,6 +7,7 @@ const validateRegisterInput = require("../../validation/register");
 const validateLoginInput = require("../../validation/login");
 // Load User model
 const User = require("../../models/User");
+const makeResponse = require("../../helpers/response");
 
 // @route POST api/users/register
 // @desc Register user
@@ -17,12 +18,12 @@ router.post("/register", (req, res) => {
   const { errors, isValid } = validateRegisterInput(req.body);
   // Check validation
   if (!isValid) {
-    return res.status(400).json(errors);
+    return makeResponse(res, 400, "Validation Failed", null, true);
   }
 
   User.findOne({ email: req.body.email }).then((user) => {
     if (user) {
-      return res.status(400).json({ email: "Email already exists" });
+      return makeResponse(res, 400, "Email already exists", null, true);
     } else {
       const newUser = new User({
         name: req.body.name,
@@ -36,8 +37,12 @@ router.post("/register", (req, res) => {
           newUser.password = hash;
           newUser
             .save()
-            .then((user) => res.json(user))
-            .catch((err) => console.log(err));
+            .then((user) => {
+              makeResponse(res, 200, "Registered Successfully", user, false);
+            })
+            .catch((err) => {
+              makeResponse(res, 400, "Registeration Failed", null, true);
+            });
         });
       });
     }
@@ -60,7 +65,7 @@ router.post("/login", (req, res) => {
   User.findOne({ email }).then((user) => {
     // Check if user exists
     if (!user) {
-      return res.status(404).json({ emailnotfound: "Email not found" });
+      makeResponse(res, 404, "Email Not Found", null, true);
     }
     // Check password
     bcrypt.compare(password, user.password).then((isMatch) => {
@@ -86,9 +91,7 @@ router.post("/login", (req, res) => {
           }
         );
       } else {
-        return res
-          .status(400)
-          .json({ passwordincorrect: "Password incorrect" });
+        return makeResponse(res, 400, "Password Incorrect", null, true);
       }
     });
   });
