@@ -30,7 +30,7 @@ app.use(
 );
 
 app.get("/", (req, res) => {
-  res.send("Server Running");
+  res.send("Server Running Fine");
 });
 
 app.use(bodyParser.json());
