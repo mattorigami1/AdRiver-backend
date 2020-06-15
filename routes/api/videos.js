@@ -462,6 +462,15 @@ router.delete(
     //   })
     //   .catch((err) => makeResponse(res, 500, "Failed", err, true));
 
+    Video.deleteOne({ _id: req.params.id })
+      .then((vide) => {
+        return makeResponse(res, 200, "Deleted Video", video, false);
+      })
+      .catch((err) => {
+        return makeResponse(res, 500, "Failed", err, true);
+      });
+    return false;
+
     await Video.findOne({ _id: req.params.id })
       .then((video) => {
         s3.deleteObjects(
@@ -484,13 +493,6 @@ router.delete(
             if (err) {
               return makeResponse(res, 400, "Error deleting Video", null, true);
             } else {
-              Video.deleteOne({ _id: req.params.id })
-                .then((vide) => {
-                  return makeResponse(res, 200, "Deleted Video", video, false);
-                })
-                .catch((err) => {
-                  return makeResponse(res, 500, "Failed", err, true);
-                });
             }
             // an error occurred
             // else makeResponse(res, 200, "Deleted Video", video, false);
