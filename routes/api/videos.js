@@ -364,21 +364,17 @@ router.put(
 // @route GET api/videos
 // @desc Get All Videos
 // @access Public
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    await Video.find({})
-      .populate("user")
-      .then((videos) => {
-        makeResponse(res, 200, "All Videos", videos, false);
-      })
-      .catch((err) => {
-        makeResponse(res, 400, "Failed during fetching videos !", null, true);
-      })
-      .catch((err) => {});
-  }
-);
+router.get("/", async (req, res) => {
+  await Video.find({})
+    .populate("user")
+    .then((videos) => {
+      makeResponse(res, 200, "All Videos", videos, false);
+    })
+    .catch((err) => {
+      makeResponse(res, 400, "Failed during fetching videos !", null, true);
+    })
+    .catch((err) => {});
+});
 
 // @route GET api/videos/:id
 // @desc Get Single Videos By ID
