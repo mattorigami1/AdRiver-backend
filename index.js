@@ -49,9 +49,6 @@ app.use(passport.initialize());
 // Passport config
 require("./config/passport")(passport);
 
-// making images and vides folder "media/uploads" public
-app.use("/videos", express.static("media/uploads"));
-
 // Routes
 app.use("/users", users);
 app.use("/videos", videos);
