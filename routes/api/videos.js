@@ -396,52 +396,92 @@ router.get(
 // @route POST api/videos/review/:id
 // @desc create review against a video
 // @access Public
-router.post(
-  "/review/:video_id",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    const vid_id = req.params.video_id;
-    var updatingVideo = null;
+router.post("/review/:video_id", async (req, res) => {
+  const vid_id = req.params.video_id;
+  var updatingVideo = null;
 
-    const newReview = {
-      negative: req.body.negative,
-      like: req.body.like,
-      possitive: req.body.possitive,
-      heardBefore: req.body.heardBefore,
-    };
+  const newReview = {
+    negative: req.body.negative,
+    like: req.body.like,
+    positive: req.body.positive,
+    heardBefore: req.body.heardBefore,
+  };
 
-    await Video.findById(vid_id)
-      .then((updateVid) => {
-        updatingVideo = updateVid;
+  await Video.findById(vid_id)
+    .then((updateVid) => {
+      updatingVideo = updateVid;
+    })
+    .catch((err) => {
+      res
+        .status(400)
+        .json({ statusCode: 400, message: "Update Failed", errors: err });
+    });
+  if (updatingVideo !== null) {
+    await Video.findOneAndUpdate(
+      { _id: vid_id },
+      { reviews: [...updatingVideo.reviews, newReview] },
+      {
+        new: true,
+      }
+    )
+      .then((updated) => {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Updated Successfully",
+          data: updated,
+        });
       })
       .catch((err) => {
         res
           .status(400)
           .json({ statusCode: 400, message: "Update Failed", errors: err });
       });
-    if (updatingVideo !== null) {
-      await Video.findOneAndUpdate(
-        { _id: vid_id },
-        { reviews: [...updatingVideo.reviews, newReview] },
-        {
-          new: true,
-        }
-      )
-        .then((updated) => {
-          res.status(200).json({
-            statusCode: 200,
-            message: "Updated Successfully",
-            data: updated,
-          });
-        })
-        .catch((err) => {
-          res
-            .status(400)
-            .json({ statusCode: 400, message: "Update Failed", errors: err });
-        });
-    }
   }
-);
+});
+
+// @route POST api/deleteReview/review/:id
+// @desc create review against a video
+// @access Public
+router.put("/deleteReview/:video_id/:review_id", async (req, res) => {
+  const vid_id = req.params.video_id;
+  var updatingVideo = null;
+
+  await Video.findById(vid_id)
+    .then((updateVid) => {
+      updatingVideo = updateVid;
+    })
+    .catch((err) => {
+      res
+        .status(400)
+        .json({ statusCode: 400, message: "Update Failed", errors: err });
+    });
+
+  if (updatingVideo !== null) {
+    await Video.findOneAndUpdate(
+      { _id: vid_id },
+      {
+        reviews: updatingVideo.reviews.filter(function (el) {
+          return el._id != req.params.review_id;
+        }),
+      },
+      {
+        new: true,
+      }
+    )
+      .then((updated) => {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Updated Successfully",
+          data: updated,
+        });
+      })
+      .catch((err) => {
+        res
+          .status(400)
+          .json({ statusCode: 400, message: "Update Failed", errors: err });
+      });
+  }
+});
 
 // @route DELETE api/videos
 // @desc Delete single Video

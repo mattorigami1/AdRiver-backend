@@ -36,7 +36,7 @@ const VideoSchema = new Schema({
   reviews: [
     {
       negative: String,
-      possitive: String,
+      positive: String,
       like: Boolean,
       heardBefore: Boolean,
       date: { type: Date, default: Date.now },
